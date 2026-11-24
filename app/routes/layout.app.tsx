@@ -1,4 +1,5 @@
-import { Outlet } from "react-router";
+import { Outlet, useSearchParams } from "react-router";
+import { NotificationPrototype } from "~/components/notification-prototype";
 import type { Route } from "./+types/layout.app";
 import { Sidebar } from "~/components/sidebar";
 import { DevUI } from "~/components/dev-ui";
@@ -217,6 +218,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function AppLayout({ loaderData }: Route.ComponentProps) {
+  const [searchParams] = useSearchParams();
   const {
     users,
     currentUser,
@@ -235,6 +237,9 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
         isTeamAdmin={userIsTeamAdmin}
       />
       <main className="flex-1 overflow-y-auto">
+        {import.meta.env.DEV && searchParams.has("notification-prototype") && (
+          <NotificationPrototype />
+        )}
         <Outlet />
       </main>
       <DevUI
