@@ -116,8 +116,8 @@ _Avoid_: Inbox, Activity feed
 ### Bookmarks and Notes
 
 **Bookmark**:
-A Student's flag on a Lesson, so they can find it again. One per Student per
-Lesson, and the Student is the only one who sees it.
+A Student's flag on a Lesson, so they can find it again.
+One per Student per Lesson, and the Student is the only one who sees it.
 _Avoid_: Favourite, star, saved item
 
 **Note**:

@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { createTestDb, seedBaseData } from "~/test/setup";
 import * as schema from "~/db/schema";
 import { LessonProgressStatus, RefundStatus, UserRole } from "~/db/schema";
+import { getLessonNote, isLessonBookmarked, saveLessonNote, toggleBookmark } from "./saved-lessons.server";
 import {
   approveRefundRequest,
   checkRefundRequest,
@@ -265,6 +266,24 @@ describe("the refund offer on the course page", () => {
 });
 
 describe("approving a Refund Request", () => {
+  it("keeps the student's bookmarks and notes for a future enrollment", async () => {
+    const purchase = buyForSelf(base.user.id);
+    const lessonId = lessonIds[0];
+    toggleBookmark(db, base.user.id, lessonId);
+    saveLessonNote(db, base.user.id, lessonId, "My saved note", NOW);
+    const id = await raise(purchase.id, base.user.id);
+
+    const result = await approveRefundRequest(db, id, platformAdmin.id, null, NOW, notifications);
+
+    expect(result.ok).toBe(true);
+    expect(isEnrolled(base.user.id)).toBe(false);
+    expect(isLessonBookmarked(db, base.user.id, lessonId)).toBe(true);
+    expect(getLessonNote(db, base.user.id, lessonId)).toEqual({
+      body: "My saved note",
+      updatedAt: NOW.toISOString(),
+    });
+  });
+
   it("removes the buyer's Enrollment but keeps their progress", async () => {
     const purchase = buyForSelf(base.user.id);
     db.insert(schema.lessonProgress)

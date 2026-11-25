@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import {
   agentProviders,
   CUSTOM_ID,
@@ -14,6 +16,21 @@ import {
 } from "./agents";
 
 const PORT = { port: 8787, platform: "linux" as NodeJS.Platform };
+
+function readOpenCodeConfig(command: string) {
+  const assignment = command.slice(0, -" opencode".length);
+  const gitShell = join(process.env.ProgramFiles ?? "", "Git", "bin", "sh.exe");
+  const shell = process.platform === "win32" && existsSync(gitShell) ? gitShell : "sh";
+  const serialized = execFileSync(
+    shell,
+    [
+      "-c",
+      `${assignment} node -e 'process.stdout.write(process.env.OPENCODE_CONFIG_CONTENT)'`,
+    ],
+    { encoding: "utf8" }
+  );
+  return JSON.parse(serialized);
+}
 
 /** Resolve, and fail loudly if the answer was not a usable target. */
 function target(agent: string, provider?: string) {
@@ -1083,16 +1100,7 @@ describe("resolveChoice — custom base URL, per-agent command template", () => 
       customRenderer: "openai",
       customModel: "qwen3:8b",
     });
-    const assignment = result.command.slice(0, -" opencode".length);
-    const serialized = execFileSync(
-      "/bin/sh",
-      [
-        "-c",
-        `${assignment} node -e 'process.stdout.write(process.env.OPENCODE_CONFIG_CONTENT)'`,
-      ],
-      { encoding: "utf8" }
-    );
-    const config = JSON.parse(serialized);
+    const config = readOpenCodeConfig(result.command);
 
     expect(config.provider["request-logger"]).toEqual({
       npm: "@ai-sdk/openai-compatible",
@@ -1114,16 +1122,7 @@ describe("resolveChoice — custom base URL, per-agent command template", () => 
       customRenderer: "openai",
       customModel: model,
     });
-    const assignment = result.command.slice(0, -" opencode".length);
-    const serialized = execFileSync(
-      "/bin/sh",
-      [
-        "-c",
-        `${assignment} node -e 'process.stdout.write(process.env.OPENCODE_CONFIG_CONTENT)'`,
-      ],
-      { encoding: "utf8" }
-    );
-    const config = JSON.parse(serialized);
+    const config = readOpenCodeConfig(result.command);
 
     expect(config.model).toBe(`request-logger/${model}`);
     expect(config.provider["request-logger"].models).toEqual({
